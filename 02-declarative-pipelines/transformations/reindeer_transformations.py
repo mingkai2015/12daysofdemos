@@ -67,12 +67,6 @@ def dim_reindeer():
 # SILVER LAYER: Fact Table with Data Quality Rules
 # ==============================================================================
 @dp.table(name="fact_telemetry")
-@dp.expect_all_or_drop({
-    "valid_reindeer_id": "reindeer_id IS NOT NULL",
-    "valid_heart_rate": "heart_rate BETWEEN 30 AND 250",
-    "valid_speed": "speed_mph >= 0",
-    "valid_altitude": "altitude_feet >= 0"
-})
 def fact_telemetry():
     return (
         spark.readStream.table("bronze_telemetry_raw")
@@ -80,6 +74,11 @@ def fact_telemetry():
         .withColumn("avg_hoof_pressure", 
             (col("hoof_pressure_fl") + col("hoof_pressure_fr") + 
              col("hoof_pressure_rl") + col("hoof_pressure_rr")) / 4)
+        .filter(
+            (col("reindeer_id").isNotNull()) &
+            (col("speed_mph") >= 0) &
+            (col("altitude_feet") >= 0)
+        )
         .select(
             "reindeer_id",
             "event_timestamp",

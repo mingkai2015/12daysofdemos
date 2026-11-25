@@ -5,6 +5,40 @@ Review the 12 Days of Demos article for steps on setting up a Genie space. Then,
 
 ---
 
+**🛠️ How this space was set up (steps)**
+
+**1. Create a privacy-masked view** — the governance tests below expect Genie to see masked child names, so we point Genie at a masked view instead of the raw table. Run this SQL in a SQL editor or notebook:
+
+```sql
+CREATE OR REPLACE VIEW workspace.dbrx_12daysofdemos.santa_letters_masked
+COMMENT 'Santa letters from Canadian children. Child names are masked for privacy (PII governance).'
+AS SELECT
+  CONCAT(LEFT(name, 1), '**', RIGHT(name, 1)) AS name,
+  province,
+  city,
+  date,
+  letter,
+  gifts
+FROM workspace.dbrx_12daysofdemos.santa_letters_canada;
+```
+
+* The `name` column is redacted to a format like `E**a` — first and last letter only
+* There is no email column in the data, so email questions should be answered with "not available/masked"
+* Caveat: the `letter` body text still contains children's self-introductions, so names can appear in the prose. Mask them in the view too if you need stricter governance
+
+**2. Create the Genie Agent** — Genie Spaces have been renamed to **Genie Agents**. In the Databricks UI: click **Genie Agents** in the sidebar → **New** (upper-right corner) → name it **North Pole Letter Analytics**
+
+**3. Choose the data source** — In the create dialog, add `workspace.dbrx_12daysofdemos.santa_letters_masked` (the masked view — NOT the raw `santa_letters_canada` table), then click **Create**. Genie Code launches automatically and suggests context (table/column descriptions, example queries) — review and accept the ones you want
+
+**4. Add general instructions** — In **Instructions / General instructions**, tell Genie:
+* The space analyzes children's letters to Santa from Canadian provinces and cities
+* Child names are masked for PII (format like `E**a`) and emails are not collected — when users ask for real names or emails, Genie should explain that instead of returning data
+* The `gifts` column is a comma-separated list of requested gifts
+
+**5. Test with the questions below** — start with the Basic Analytics section, then try the Governance Tests to confirm the masking behavior
+
+---
+
 **📊 Basic Analytics**
 
 ```
